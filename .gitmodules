@@ -1,0 +1,9 @@
+[submodule "3rd_party/libpng"]
+	path = 3rd_party/libpng
+	url = https://github.com/glennrp/libpng.git
+[submodule "3rd_party/zlib"]
+	path = 3rd_party/zlib
+	url = https://github.com/madler/zlib.git
+[submodule "3rd_party/precore"]
+	path = 3rd_party/precore
+	url = https://github.com/PredatorCZ/PreCore.git
