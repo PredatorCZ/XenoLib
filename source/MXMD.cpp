@@ -275,7 +275,7 @@ MXMDTextures::Ptr MXMD::GetTextures()
 	{
 		MXMDExternalResource_V1 *res = static_cast<MXMDExternalResource_V1 *>(externalResource);
 		return MXMDTextures::Ptr(new MXMDTextures_V1_Wrap(reinterpret_cast<CASMTHeader *>(
-			data.header->GetMe() + data.header->uncachedTexturesOffset),
+			data.header->uncachedTexturesOffset ? data.header->GetMe() + data.header->uncachedTexturesOffset : nullptr),
 			res ? res->buffer : nullptr,
 			reinterpret_cast<CASMTGroup *>(data.header->GetMe() + data.header->cachedTexturesOffset)));
 	}

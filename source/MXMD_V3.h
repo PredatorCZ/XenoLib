@@ -218,7 +218,10 @@ public:
 			MXMDVertexDescriptor_Internal *worker = desc[d].GetWorker();
 
 			if (!worker)
+			{
+				currentOffset += desc[d].size;
 				continue;
+			}
 
 			worker->buffer = data->Buffer(buffer) + currentOffset;
 			worker->stride = data->stride;
@@ -442,6 +445,10 @@ public:
 	MXMDTextures_V31_Wrap(CASMTHeader_V3 *_uncached, MXMDExternalResource_V31 *_buffer, CASMTGroup *_cached) :unchached(_uncached), buffers(_buffer), cached(_cached) {}
 
 	int GetNumTextures() const { return cached->count; }
+	const char *GetTextureName(int id) const
+	{
+		return cached->GetMe() + cached->GetTextures()[id].nameOffset;
+	}
 	int ExtractTexture(const wchar_t *outputFolder, int id, TextureConversionParams params) const { return _ExtractTexture(outputFolder, id, params); }
 	int ExtractTexture(const char *outputFolder, int id, TextureConversionParams params) const { return _ExtractTexture(outputFolder, id, params); }
 
@@ -457,6 +464,7 @@ public:
 	MXMDTextures_V3_Wrap(DRSM *_drsm) : drsm(_drsm) {}
 
 	int GetNumTextures() const { return drsm->GetNumTextures(); }
+	const char *GetTextureName(int id) const { return drsm->GetTextureName(id); }
 	int ExtractTexture(const wchar_t *outputFolder, int id, TextureConversionParams params) const { return drsm->ExtractTexture(outputFolder, id, params); }
 	int ExtractTexture(const char *outputFolder, int id, TextureConversionParams params) const { return drsm->ExtractTexture(outputFolder, id, params); }
 };

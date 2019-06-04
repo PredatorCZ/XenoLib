@@ -213,6 +213,7 @@ public:
 	typedef std::unique_ptr<MXMDTextures> Ptr;
 
 	virtual int GetNumTextures() const = 0;
+	virtual const char *GetTextureName(int id) const = 0;
 	virtual int ExtractTexture(const wchar_t *outputFolder, int id, TextureConversionParams params) const = 0;
 	virtual int ExtractTexture(const char *outputFolder, int id, TextureConversionParams params) const = 0;
 	

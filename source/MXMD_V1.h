@@ -178,11 +178,14 @@ struct MXMDModel_V1
 		for (int t = 0; t < nodesCount; t++)
 			bones[t].SwapEndian();
 
-		GetSkinBones()->SwapEndian(GetMe());
+		MXMDSkinBones_V1 *skinBones = GetSkinBones();
+
+		if (skinBones)
+			skinBones->SwapEndian(GetMe());
 	}
 	ES_FORCEINLINE MXMDMeshGroup_V1 *GetMeshGroups() { return reinterpret_cast<MXMDMeshGroup_V1 *>(GetMe() + assemblyOffset); }
 	ES_FORCEINLINE MXMDBone_V1 *GetBones() { return reinterpret_cast<MXMDBone_V1 *>(GetMe() + nodesOffset); }
-	ES_FORCEINLINE MXMDSkinBones_V1 *GetSkinBones() { return reinterpret_cast<MXMDSkinBones_V1 *>(GetMe() + boneListOffset); }
+	ES_FORCEINLINE MXMDSkinBones_V1 *GetSkinBones() { return !boneListOffset ? nullptr : reinterpret_cast<MXMDSkinBones_V1 *>(GetMe() + boneListOffset); }
 };
 
 class MXMDModel_V1_Wrap : public MXMDModel
@@ -196,6 +199,10 @@ public:
 			return;
 
 		MXMDSkinBones_V1 *sBones = data->GetSkinBones();
+
+		if (!sBones)
+			return;
+
 		short *ids = sBones->GetIDs(data->GetMe());
 		int *nameOffsets = sBones->GetBoneNameOffsets(data->GetMe());
 
@@ -275,7 +282,10 @@ public:
 			MXMDVertexDescriptor_Internal *worker = desc[d].GetWorker();
 
 			if (!worker)
+			{
+				currentOffset += desc[d].size;
 				continue;
+			}
 
 			worker->buffer = data->Buffer(masterBuffer) + currentOffset;
 			worker->stride = data->stride;
@@ -455,9 +465,9 @@ struct CASMTHeader
 	}
 
 	ES_FORCEINLINE int *GetGroupOffsets() { return reinterpret_cast<int *>(this + 1); }
-	ES_FORCEINLINE int *GetGroupIDsOffsets() { return GetGroupOffsets() + numGroups; }
-	ES_FORCEINLINE int *GetGroupDataOffsets() { return GetGroupIDsOffsets() + numGroups; }
-	ES_FORCEINLINE int *GetGroupDataSizes() { return GetGroupDataOffsets() + numGroups; }
+	ES_FORCEINLINE int *GetGroupIDsOffsets() { return GetGroupOffsets() + 2; }
+	ES_FORCEINLINE int *GetGroupDataOffsets() { return GetGroupIDsOffsets() + 2; }
+	ES_FORCEINLINE int *GetGroupDataSizes() { return GetGroupDataOffsets() + 2; }
 
 	ES_FORCEINLINE CASMTGroup *GetGroup(int id) { return reinterpret_cast<CASMTGroup *>(GetMe() + GetGroupOffsets()[id]); }
 	ES_FORCEINLINE short *GetGroupTextureIDs(int id) { return reinterpret_cast<short *>(GetMe() + GetGroupIDsOffsets()[id]); }
@@ -576,6 +586,11 @@ public:
 	MXMDTextures_V1_Wrap(CASMTHeader *_uncached, char *_buffer, CASMTGroup *_cached) :unchached(_uncached), buffer(_buffer), cached(_cached) {}
 
 	int GetNumTextures() const { return cached->count; }
+	const char *GetTextureName(int id) const 
+	{
+		return cached->GetMe() + cached->GetTextures()[id].nameOffset;
+	}
+
 	int ExtractTexture(const wchar_t *outputFolder, int id, TextureConversionParams params) const { return _ExtractTexture(outputFolder, id, params); }
 	int ExtractTexture(const char *outputFolder, int id, TextureConversionParams params) const { return _ExtractTexture(outputFolder, id, params); }
 

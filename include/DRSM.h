@@ -112,6 +112,7 @@ public:
 	ES_FORCEINLINE DRSMResources *GetData() { return data.header; }
 	ES_FORCEINLINE char *GetResource(int id) { return resources[id]; }
 	ES_FORCEINLINE int GetNumTextures() const { return data.header->TextureTable()->numTextureItems; }
+	const char *GetTextureName(int id) const;
 	ES_FORCEINLINE int ExtractTexture(const wchar_t *outputFolder, int id, TextureConversionParams params) const { return _ExtractTexture(outputFolder, id, params); }
 	ES_FORCEINLINE int ExtractTexture(const char *outputFolder, int id, TextureConversionParams params) const { return _ExtractTexture(outputFolder, id, params); }
 };

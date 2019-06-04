@@ -83,6 +83,12 @@ int DRSM::_Load(const _Ty0 *fileName)
 template int DRSM::_Load(const char *fileName);
 template int DRSM::_Load(const wchar_t *fileName);
 
+const char *DRSM::GetTextureName(int id) const
+{
+	DRSMTextureItem *cTex = data.header->TextureTable()->Textures() + id;
+	return data.header->TextureTable()->TextureName(cTex);
+}
+
 DRSM::~DRSM()
 {
 	if (data.masterBuffer)
