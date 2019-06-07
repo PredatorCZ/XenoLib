@@ -1052,6 +1052,37 @@ int MXMD::_Load(const _Ty0 *fileName)
 			externalResourcev1->buffer = static_cast<char *>(malloc(_fileSize));
 			res.ReadBuffer(externalResourcev1->buffer, _fileSize);
 			externalResource = externalResourcev1;
+
+			if (rd.SwappedEndian())
+			{
+				std::vector<int> flippedOffsets;
+				int *indices = reinterpret_cast<int *>(data.masterBuffer + data.header->externalBufferIDsOffset);
+
+				for (int i = 0; i < data.header->externalBufferIDsCount; i++)
+				{
+					const int &cIndex = indices[i];
+					bool found = false;
+
+					for (auto &o : flippedOffsets)
+						if (o == cIndex)
+						{
+							found = true;
+							break;
+						}
+
+					if (found)
+						continue;
+
+					flippedOffsets.push_back(cIndex);
+
+					MXMDGeomBuffers::Ptr geom = GetGeometry(i);
+
+					if (!geom)
+						continue;
+
+					geom->SwapEndian();
+				}
+			}
 		}
 		else if (hdr.uncachedTexturesOffset  || hdr.externalBufferIDsOffset)
 		{
@@ -1154,7 +1185,11 @@ MXMDGeomBuffers::Ptr MXMD::GetGeometry(int groupID)
 		{
 			MXMDExternalResource_V1 *res = static_cast<MXMDExternalResource_V1 *>(externalResource);
 			int *indices = reinterpret_cast<int *>(data.masterBuffer + data.header->externalBufferIDsOffset);
-			return MXMDGeomBuffers::Ptr(new MXMDGeometryHeader_V1_Wrap(reinterpret_cast<MXMDGeometryHeader_V1 *>(res->buffer + indices[groupID])));
+
+			if (res)
+				return MXMDGeomBuffers::Ptr(new MXMDGeometryHeader_V1_Wrap(reinterpret_cast<MXMDGeometryHeader_V1 *>(res->buffer + indices[groupID])));
+			else
+				return nullptr;
 		}
 		else
 			return nullptr;
