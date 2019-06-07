@@ -16,11 +16,8 @@
 */
 
 #pragma once
-#include <map>
 #include "datas/endian.hpp"
 #include "datas/vectors.hpp"
-#include "datas/masterprinter.hpp"
-#include "datas/esstring.h"
 #include "MXMD.h"
 
 template<class E, class C> ES_INLINE void _ArraySwap(C &input)
@@ -32,134 +29,37 @@ template<class E, class C> ES_INLINE void _ArraySwap(C &input)
 		FByteswapper(*(inputPtr + t));
 }
 
-class MXMDVertexDescriptor_Internal : public MXMDVertexDescriptor
+enum MXMDVersions
 {
-public:
-	char *buffer;
-	int stride;
-	int count;
-	MXMDVertexDescriptorType type;
-	virtual void SwapEndian(int count) {}
-	MXMDVertexDescriptorType Type() const { return type; }
-	int Size() const { return count; }
+	MXMDVer1 = 10040,
+	MXMDVer2 = 10111,
+	MXMDVer3 = 10112,
 };
 
-template<MXMDVertexDescriptorType> class tVertexDescriptor;
+static constexpr MXMDVersions versions[] = { MXMDVer1, MXMDVer3 };
 
-template<>class tVertexDescriptor<MXMD_POSITION> : public MXMDVertexDescriptor_Internal
+struct MXMDHeader
 {
-	void Evaluate(int at, void *data)
-	{
-		Vector &out = *static_cast<Vector *>(data);
-		out = *reinterpret_cast<Vector *>(buffer + stride * at);
-	}
+	int magic,
+		version,
+		modelsOffset,
+		materialsOffset,
+		unkOffset0,
+		vertexBufferOffset,
+		shadersOffset,
+		cachedTexturesOffset,
+		unkOffset1,
+		uncachedTexturesOffset,
+		//custom values
+		externalBufferIDsOffset,
+		externalBufferIDsCount,
+		null00[5];
 
-	void SwapEndian(int count)
-	{
-		for (int v = 0; v < count; v++)
-			reinterpret_cast<Vector *>(buffer + stride * v)->SwapEndian();
-	}
+	ES_FORCEINLINE void SwapEndian() { _ArraySwap<int>(*this); }
+	ES_FORCEINLINE char *GetMe() { return reinterpret_cast<char *>(this); }
 };
 
-template<>class tVertexDescriptor<MXMD_NORMAL32> : public tVertexDescriptor<MXMD_POSITION> {};
-template<>class tVertexDescriptor<MXMD_WEIGHT32> : public tVertexDescriptor<MXMD_POSITION> {};
-
-template<>class tVertexDescriptor<MXMD_NORMAL> : public MXMDVertexDescriptor_Internal
-{
-	void Evaluate(int at, void *data)
-	{
-		Vector &out = *static_cast<Vector *>(data);
-		out = reinterpret_cast<CVector *>(buffer + stride * at)->Convert<float>() * (1.0f / CHAR_MAX);
-	}
-};
-template<>class tVertexDescriptor<MXMD_NORMAL2> : public tVertexDescriptor<MXMD_NORMAL> {};
-
-template<>class tVertexDescriptor<MXMD_BONEID> : public MXMDVertexDescriptor_Internal
-{
-	void Evaluate(int at, void *data)
-	{
-		UCVector4 &out = *static_cast<UCVector4 *>(data);
-		out = *reinterpret_cast<UCVector4 *>(buffer + stride * at);
-	}
-};
-template<>class tVertexDescriptor<MXMD_BONEID2> : public tVertexDescriptor<MXMD_BONEID> {};
-
-template<>class tVertexDescriptor<MXMD_WEIGHTID> : public MXMDVertexDescriptor_Internal
-{
-	void Evaluate(int at, void *data)
-	{
-		ushort &out = *static_cast<unsigned short *>(data);
-		out = *reinterpret_cast<ushort *>(buffer + stride * at);
-	}
-
-	void SwapEndian(int count)
-	{
-		for (int v = 0; v < count; v++)
-			FByteswapper(*reinterpret_cast<ushort *>(buffer + stride * v));
-	}
-};
-
-template<>class tVertexDescriptor<MXMD_VERTEXCOLOR> : public MXMDVertexDescriptor_Internal
-{
-	void Evaluate(int at, void *data)
-	{
-		Vector4 &out = *static_cast<Vector4 *>(data);
-		out = reinterpret_cast<UCVector4 *>(buffer + stride * at)->Convert<float>() * (1.0f / UCHAR_MAX);
-	}
-};
-
-template<>class tVertexDescriptor<MXMD_UV1> : public MXMDVertexDescriptor_Internal
-{
-	void Evaluate(int at, void *data)
-	{
-		Vector2 &out = *static_cast<Vector2 *>(data);
-		out = *reinterpret_cast<Vector2 *>(buffer + stride * at);
-	}
-
-	void SwapEndian(int count)
-	{
-		for (int v = 0; v < count; v++)
-			reinterpret_cast<Vector2 *>(buffer + stride * v)->SwapEndian();
-	}
-};
-template<>class tVertexDescriptor<MXMD_UV2> : public tVertexDescriptor<MXMD_UV1> {};
-template<>class tVertexDescriptor<MXMD_UV3> : public tVertexDescriptor<MXMD_UV1> {};
-
-template<>class tVertexDescriptor<MXMD_WEIGHT16> : public MXMDVertexDescriptor_Internal
-{
-	void Evaluate(int at, void *data)
-	{
-		Vector4 &out = *static_cast<Vector4 *>(data);
-		out = reinterpret_cast<USVector4 *>(buffer + stride * at)->Convert<float>() * (1.0f / USHRT_MAX);
-	}
-
-	void SwapEndian(int count)
-	{
-		for (int v = 0; v < count; v++)
-			reinterpret_cast<USVector4 *>(buffer + stride * v)->SwapEndian();
-	}
-};
-
-template<>class tVertexDescriptor<MXMD_NORMALMORPH> : public MXMDVertexDescriptor_Internal
-{
-	void Evaluate(int at, void *data)
-	{
-		Vector4 &out = *static_cast<Vector4 *>(data);
-		out = (reinterpret_cast<UCVector4 *>(buffer + stride * at)->Convert<float>() - 127.f) * (1.f / SCHAR_MAX);
-	}
-};
-
-template<>class tVertexDescriptor<MXMD_MORPHVERTEXID> : public MXMDVertexDescriptor_Internal
-{
-	void Evaluate(int at, void *data)
-	{
-		int &out = *static_cast<int *>(data);
-		out = *reinterpret_cast<int *>(buffer + stride * at);
-	}
-};
-
-typedef std::map<MXMDVertexDescriptorType, MXMDVertexDescriptor_Internal *(*)()> DescMap;
-extern const DescMap _MXMDDescriptorRegistry;
+class MXMDVertexDescriptor_Internal;
 
 struct MXMDVertexType
 {
@@ -167,11 +67,5 @@ struct MXMDVertexType
 		size;
 
 	ES_FORCEINLINE void SwapEndian() { _ArraySwap<short>(*this); }
-	ES_FORCEINLINE MXMDVertexDescriptor_Internal *GetWorker()
-	{
-		if (_MXMDDescriptorRegistry.count(static_cast<MXMDVertexDescriptorType>(type)))
-			return _MXMDDescriptorRegistry.at(static_cast<MXMDVertexDescriptorType>(type))();
-
-		return nullptr;
-	}
+	MXMDVertexDescriptor_Internal *GetWorker();
 };

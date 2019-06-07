@@ -16,6 +16,7 @@
 */
 
 #pragma once
+#include "MXMD_Internal.h"
 
 struct MXMDMeshObject_V1
 {
@@ -34,29 +35,15 @@ struct MXMDMeshObject_V1
 	ES_FORCEINLINE void SwapEndian() { _ArraySwap<int>(*this); }
 };
 
-class MXMDMeshObject_V1_Wrap : public MXMDMeshObject
-{
-	MXMDMeshObject_V1 *data;
-public:
-	MXMDMeshObject_V1_Wrap(MXMDMeshObject_V1 *input) : data(input) {}
-
-	int GetMeshFacesID() const { return data->meshFacesID; }
-	int GetUVFacesID() const { return data->UVFacesID; }
-	int GetBufferID() const { return data->bufferID; }
-	int GetMaterialID() const { return data->materialID; }
-	int GetSkinDesc() const { return data->skinDescriptor; }
-	int GetGibID() const { return data->gibID; }
-	int GetLODID() const { return 0; }
-};
-
 struct MXMDMeshGroup_V1
 {
 	int meshesOffset,
 		meshesCount,
-		unk00;
+		bufferID; //originally null, now custom value
 	Vector BBMax, 
 		BBMin;
 	float boundingRadius;
+	int null[7];
 
 	ES_FORCEINLINE void SwapEndian(char *masterBuffer)
 	{ 
@@ -68,17 +55,6 @@ struct MXMDMeshGroup_V1
 			meshes[t].SwapEndian();
 	}
 	ES_FORCEINLINE MXMDMeshObject_V1 *GetMeshes(char *masterBuffer) { return reinterpret_cast<MXMDMeshObject_V1 *>(masterBuffer + meshesOffset); }
-};
-
-class MXMDMeshGroup_V1_Wrap : public MXMDMeshGroup
-{
-	MXMDMeshGroup_V1 *data;
-	char *masterBuffer;
-public:
-	MXMDMeshGroup_V1_Wrap(MXMDMeshGroup_V1 *input, char *inputBuff) : data(input), masterBuffer(inputBuff) {}
-
-	MXMDMeshObject::Ptr GetMeshObject(int id) const { return MXMDMeshObject::Ptr(new MXMDMeshObject_V1_Wrap(data->GetMeshes(masterBuffer) + id)); }
-	int GetNumMeshObjects() const { return data->meshesCount; }
 };
 
 struct MXMDSkinBones_V1
@@ -124,19 +100,6 @@ struct MXMDBone_V1
 	ES_FORCEINLINE const char *GetBoneName(char *masterBuffer) { return masterBuffer + nameOffset; }
 };
 
-class MXMDBone_V1_Wrap : public MXMDBone
-{
-	MXMDBone_V1 *data;
-	char *masterBuffer;
-public:
-	MXMDBone_V1_Wrap(MXMDBone_V1 *input, char *inputBuff) : data(input), masterBuffer(inputBuff) {}
-
-	const char *GetName() const { return data->GetBoneName(masterBuffer); }
-	int GetParentID() const { return data->parentID; }
-	const MXMDTransformMatrix *GetAbsTransform() const { return &data->absTransform; }
-	const MXMDTransformMatrix *GetTransform() const { return &data->transform; }
-};
-
 struct MXMDModel_V1
 {
 	Vector BBMin;
@@ -161,7 +124,7 @@ struct MXMDModel_V1
 		unkOffset00,
 		unk04[4],
 		unkOffset01,
-		unk05[3];
+		unk05;
 
 	ES_FORCEINLINE char *GetMe() { return reinterpret_cast<char *>(this); }
 	ES_FORCEINLINE void SwapEndian() 
@@ -188,59 +151,6 @@ struct MXMDModel_V1
 	ES_FORCEINLINE MXMDSkinBones_V1 *GetSkinBones() { return !boneListOffset ? nullptr : reinterpret_cast<MXMDSkinBones_V1 *>(GetMe() + boneListOffset); }
 };
 
-class MXMDModel_V1_Wrap : public MXMDModel
-{
-	MXMDModel_V1 *data;
-	std::vector<MXMDBone_V1 *> remapBones;
-public:
-	MXMDModel_V1_Wrap(MXMDModel_V1 *input) : data(input) 
-	{
-		if (data->assemblyCount > 0xFFF || !data->nodesOffset || !data->boneListOffset)
-			return;
-
-		MXMDSkinBones_V1 *sBones = data->GetSkinBones();
-
-		if (!sBones)
-			return;
-
-		short *ids = sBones->GetIDs(data->GetMe());
-		int *nameOffsets = sBones->GetBoneNameOffsets(data->GetMe());
-
-		remapBones.resize(sBones->count);
-
-		for (int r = 0; r < sBones->count; r++)
-		{
-			short cid = ids[r];
-			const char *bneName = reinterpret_cast<const char *>(nameOffsets) + nameOffsets[cid];
-
-			for (int b = 0; b < data->nodesCount; b++)
-			{
-				MXMDBone_V1 *cBone = data->GetBones() + b;
-
-				if (!strcmp(cBone->GetBoneName(data->GetBones()->GetMe()), bneName))
-				{
-					remapBones[r] = cBone;
-					break;
-				}
-			}
-		}
-
-	}
-
-	MXMDMeshGroup::Ptr GetMeshGroup(int id) const { return MXMDMeshGroup::Ptr(new MXMDMeshGroup_V1_Wrap(data->GetMeshGroups() + id, data->GetMe())); }
-	int GetNumMeshGroups() const { return data->assemblyCount; }
-
-	MXMDBone::Ptr GetBone(int id) const { return MXMDBone::Ptr(new MXMDBone_V1_Wrap(data->GetBones() + id, data->GetBones()->GetMe())); }
-	int GetNumBones() const { return data->nodesCount; }
-
-	MXMDBone::Ptr GetSkinBone(int id) const { return MXMDBone::Ptr(new MXMDBone_V1_Wrap(remapBones[id], data->GetBones()->GetMe())); }
-	int GetNumSkinBones() const { return static_cast<int>(remapBones.size()); }
-
-	const char *GetMorphName(int id) const { return nullptr; }
-
-	void SwapEndian() { data->SwapEndian(); }
-};
-
 struct MXMDVertexBuffer_V1
 {
 	int offset,
@@ -263,42 +173,6 @@ struct MXMDVertexBuffer_V1
 	ES_FORCEINLINE char *Buffer(char *masterBuffer) { return masterBuffer + offset; }
 };
 
-class MXMDVertexBuffer_V1_Wrap : public MXMDVertexBuffer
-{
-	MXMDVertexBuffer_V1 *data;
-	char *masterBuffer;
-public:
-	MXMDVertexBuffer_V1_Wrap(MXMDVertexBuffer_V1 *input, char *inputBuffer) : data(input), masterBuffer(inputBuffer) {}
-
-	int NumVertices() const { return data->count; }
-	DescriptorCollection GetDescriptors() const
-	{
-		MXMDVertexType *desc = data->Descriptors(masterBuffer);
-		DescriptorCollection coll;
-		int currentOffset = 0;
-
-		for (int d = 0; d < data->descriptorsCount; d++)
-		{
-			MXMDVertexDescriptor_Internal *worker = desc[d].GetWorker();
-
-			if (!worker)
-			{
-				currentOffset += desc[d].size;
-				continue;
-			}
-
-			worker->buffer = data->Buffer(masterBuffer) + currentOffset;
-			worker->stride = data->stride;
-			worker->count = data->count;
-			worker->type = static_cast<MXMDVertexDescriptorType>(desc[d].type);
-			currentOffset += desc[d].size;
-			coll.push_back(DescriptorCollection::value_type(worker));
-		}
-
-		return coll;
-	}
-};
-
 struct MXMDFaceBuffer_V1
 {
 	int offset,
@@ -317,17 +191,6 @@ struct MXMDFaceBuffer_V1
 	}
 	ES_FORCEINLINE USVector *Buffer(char *masterBuffer) { return reinterpret_cast<USVector *>(masterBuffer + offset); }
 	ES_FORCEINLINE ushort *BufferRaw(char *masterBuffer) { return reinterpret_cast<ushort *>(masterBuffer + offset); }
-};
-
-class MXMDFaceBuffer_V1_Wrap : public MXMDFaceBuffer
-{
-	MXMDFaceBuffer_V1 *data;
-	char *masterBuffer;
-public:
-	MXMDFaceBuffer_V1_Wrap(MXMDFaceBuffer_V1 *input, char *inputBuffer) : data(input), masterBuffer(inputBuffer) {}
-
-	int GetNumIndices() const { return data->count; }
-	const USVector *GetBuffer() const { return data->Buffer(masterBuffer); }
 };
 
 struct MXMDGeometryHeader_V1
@@ -363,46 +226,6 @@ struct MXMDGeometryHeader_V1
 	ES_FORCEINLINE MXMDVertexBuffer_V1 *GetVertexBuffers() { return reinterpret_cast<MXMDVertexBuffer_V1 *>(GetMe() + vertexBuffersOffset); }
 	ES_FORCEINLINE MXMDFaceBuffer_V1 *GetFaceBuffers() { return reinterpret_cast<MXMDFaceBuffer_V1 *>(GetMe() + faceBuffersOffset); }
 };
-
-class MXMDGeometryHeader_V1_Wrap : public MXMDGeomBuffers
-{
-	MXMDGeometryHeader_V1 *data;
-public:
-	MXMDGeometryHeader_V1_Wrap(MXMDGeometryHeader_V1 *input) : data(input) {}
-
-	MXMDVertexBuffer::Ptr GetVertexBuffer(int id) const { return MXMDVertexBuffer::Ptr(new MXMDVertexBuffer_V1_Wrap(data->GetVertexBuffers() + id, data->GetMe())); }
-	int GetNumVertexBuffers() const { return data->vertexBuffersCount; }
-	MXMDFaceBuffer::Ptr GetFaceBuffer(int id) const { return MXMDFaceBuffer::Ptr(new MXMDFaceBuffer_V1_Wrap(data->GetFaceBuffers() + id, data->GetMe())); }
-	int GetNumFaceBuffers() const { return data->faceBuffersCount; }
-	MXMDGeomVertexWeightBuffer::Ptr GetWeightsBuffer(int flags) const;
-	MXMDMorphTargets::Ptr GetVertexBufferMorphTargets(int vertexBufferID) const { return nullptr; }
-	void SwapEndian();
-};
-
-class MXMDGeomVertexWeightBuffer_V1 : public MXMDGeomVertexWeightBuffer
-{
-public:
-	MXMDVertexBuffer::DescriptorCollection wtb1,
-		wtb2;
-
-	MXMDVertexWeight GetVertexWeight(int id) const;
-};
-
-void MXMDGeometryHeader_V1_Wrap::SwapEndian()
-{
-	data->SwapEndian();
-
-	const int numVBuffers = GetNumVertexBuffers();
-
-	for (int v = 0; v < numVBuffers; v++)
-	{
-		MXMDVertexBuffer::Ptr vBuff = GetVertexBuffer(v);
-		MXMDVertexBuffer::DescriptorCollection dColl = vBuff->GetDescriptors();
-
-		for (auto &d : dColl)
-			static_cast<MXMDVertexDescriptor_Internal &>(*d).SwapEndian(vBuff->NumVertices());
-	}
-}
 
 struct CASMTTexture
 {
@@ -507,18 +330,6 @@ struct MXMDMaterial_V1
 	ES_FORCEINLINE MXMDTextureLink_V1 *GetTextureLinks(char *masterBuffer) { return reinterpret_cast<MXMDTextureLink_V1 *>(masterBuffer + texturesOffset); }
 };
 
-class MXMDMaterial_V1_Wrap : public MXMDMaterial
-{
-	MXMDMaterial_V1 *material;
-	char *masterBuffer;
-public:
-	MXMDMaterial_V1_Wrap(MXMDMaterial_V1 *inMat, char *buffer) : material(inMat), masterBuffer(buffer) {}
-
-	virtual int GetNumTextures() const { return material->texturesCount; }
-	virtual int GetTextureIndex(int id) const { return material->GetTextureLinks(masterBuffer)[id].textureID; }
-	virtual const char *GetName() const { return material->GetName(masterBuffer); }
-};
-
 struct MXMDMaterialsHeader_V1
 {
 	int materialsOffset,
@@ -552,190 +363,3 @@ struct MXMDMaterialsHeader_V1
 			mats[m].SwapEndian(GetMe());
 	}
 };
-
-class MXMDMaterials_V1_Wrap : public MXMDMaterials
-{
-	MXMDMaterialsHeader_V1 *materials;
-public:
-	MXMDMaterials_V1_Wrap(MXMDMaterialsHeader_V1 *imats) : materials(imats) {}
-
-	MXMDMaterial::Ptr GetMaterial(int id) const { return MXMDMaterial::Ptr(new MXMDMaterial_V1_Wrap(materials->GetMaterials() + id, materials->GetMe())); }
-	int GetNumMaterials() const { return materials->materialsCount; }
-
-	void SwapEndian() { materials->SwapEndian(); }
-};
-
-class MXMDExternalResource_V1 : public MXMDExternalResource
-{
-public:
-	char *buffer;
-	MXMDExternalResource_V1() : buffer(nullptr) {}
-	~MXMDExternalResource_V1()
-	{
-		if (buffer)
-			free(buffer);
-	}
-};
-
-class MXMDTextures_V1_Wrap : public MXMDTextures
-{
-	char *buffer;
-	CASMTHeader *unchached;
-	CASMTGroup *cached;
-public:
-	MXMDTextures_V1_Wrap(CASMTHeader *_uncached, char *_buffer, CASMTGroup *_cached) :unchached(_uncached), buffer(_buffer), cached(_cached) {}
-
-	int GetNumTextures() const { return cached->count; }
-	const char *GetTextureName(int id) const 
-	{
-		return cached->GetMe() + cached->GetTextures()[id].nameOffset;
-	}
-
-	int ExtractTexture(const wchar_t *outputFolder, int id, TextureConversionParams params) const { return _ExtractTexture(outputFolder, id, params); }
-	int ExtractTexture(const char *outputFolder, int id, TextureConversionParams params) const { return _ExtractTexture(outputFolder, id, params); }
-
-	template<class _Ty> int _ExtractTexture(const _Ty *outputFolder, int id, TextureConversionParams params) const;
-
-	void SwapEndian();
-};
-
-MXMDGeomVertexWeightBuffer::Ptr MXMDGeometryHeader_V1_Wrap::GetWeightsBuffer(int flags) const
-{
-	flags &= 0xff;
-	MXMDGeomVertexWeightBuffer_V1 *wbuff = new MXMDGeomVertexWeightBuffer_V1;
-
-	switch (flags)
-	{
-	case 1:
-	{
-		if (data->mergeData[4])
-		{
-			wbuff->wtb1 = GetVertexBuffer(data->mergeData[4])->GetDescriptors();
-			wbuff->wtb2 = GetVertexBuffer(data->mergeData[0])->GetDescriptors();
-		}
-		else
-		{
-			wbuff->wtb1 = GetVertexBuffer(data->mergeData[0])->GetDescriptors();
-			wbuff->wtb2 = GetVertexBuffer(data->mergeData[4])->GetDescriptors();
-		}
-		break;
-	}
-	case 2:
-	case 64:
-		wbuff->wtb1 = GetVertexBuffer(data->mergeData[1])->GetDescriptors();
-		break;
-	case 8:
-		wbuff->wtb1 = GetVertexBuffer(data->mergeData[3])->GetDescriptors();
-		wbuff->wtb2 = GetVertexBuffer(data->mergeData[4])->GetDescriptors();
-		break;
-	case 0x21:
-		wbuff->wtb1 = GetVertexBuffer(data->mergeData[4])->GetDescriptors();
-		break;
-	default:
-		delete wbuff;
-		return nullptr;
-	}
-
-	return MXMDGeomVertexWeightBuffer::Ptr(wbuff);
-}
-
-MXMDVertexWeight MXMDGeomVertexWeightBuffer_V1::GetVertexWeight(int at) const
-{
-	MXMDVertexWeight nw = {};
-	const int wtb1Size = wtb1[0]->Size();
-
-	if (wtb2.size() && at >= wtb1Size)
-	{
-		for (auto &d : wtb2)
-		{
-			switch (d->Type())
-			{
-			case MXMD_WEIGHT32:
-				d->Evaluate(at - wtb1Size, &nw.weights);
-				nw.weights.W = fmaxf(1.f - nw.weights.X - nw.weights.Y - nw.weights.Z, 0.f);
-				break;
-			case MXMD_BONEID:
-				d->Evaluate(at - wtb1Size, &nw.boneids);
-				break;
-			default:
-				break;
-			}
-		}
-	}
-	else if (wtb1.size())
-	{
-		for (auto &d : wtb1)
-		{
-			switch (d->Type())
-			{
-			case MXMD_WEIGHT32:
-				d->Evaluate(at, &nw.weights);
-				nw.weights.W = fmaxf(1.f - nw.weights.X - nw.weights.Y - nw.weights.Z, 0.f);
-				break;
-			case MXMD_BONEID:
-				d->Evaluate(at, &nw.boneids);
-				break;
-			default:
-				break;
-			}
-		}
-	}
-
-	return nw;
-}
-
-void MXMDTextures_V1_Wrap::SwapEndian()
-{
-	if (unchached)
-		unchached->SwapEndian();
-
-	if (cached)
-		cached->SwapEndian();
-}
-
-template<class _Ty> 
-int MXMDTextures_V1_Wrap::_ExtractTexture(const _Ty *outputFolder, int id, TextureConversionParams params) const
-{
-	CASMTTexture *foundTexture = nullptr;
-	const char *textureName = nullptr;
-	const char *textureData = nullptr;
-
-	if (buffer && unchached)
-		for (int g = unchached->numGroups - 1; g > -1 && !foundTexture; g--)
-		{
-			short *ids = unchached->GetGroupTextureIDs(g);
-			CASMTGroup *grp = unchached->GetGroup(g);
-
-			for (int i = 0; i < grp->count; i++)
-				if (ids[i] == id)
-				{
-					foundTexture = grp->GetTextures() + i;
-					textureData = buffer + unchached->GetGroupDataOffsets()[g] + foundTexture->offset;
-					textureName = grp->GetMe() + foundTexture->nameOffset;
-					break;
-				}
-		}
-
-	if (!foundTexture && cached)
-	{
-		foundTexture = cached->GetTextures() + id;
-		textureName = cached->GetMe() + foundTexture->nameOffset;
-		textureData = cached->GetMe() + foundTexture->offset;
-	}
-
-	if (!foundTexture)
-	{
-		printerror("[MXMD] Cannot find texture: ", << id);
-		return 1;
-	}
-
-	const UniString<_Ty> tex = outputFolder + esStringConvert<_Ty>(textureName);
-
-	if (ConvertMTXT(textureData, foundTexture->size, tex.c_str(), params))
-	{
-		printerror("[MXMD] Texture: ", << id << " could not be created");
-		return 2;
-	}
-
-	return 0;
-}

@@ -251,6 +251,6 @@ public:
 	ES_FORCEINLINE int Load(const wchar_t *fileName) { return _Load(fileName); }
 	MXMDModel::Ptr GetModel();
 	MXMDMaterials::Ptr GetMaterials();
-	MXMDGeomBuffers::Ptr GetGeometry();
+	MXMDGeomBuffers::Ptr GetGeometry(int groupID = 0);
 	MXMDTextures::Ptr GetTextures();
 };
