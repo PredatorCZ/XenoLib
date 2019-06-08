@@ -224,6 +224,20 @@ public:
 	virtual ~MXMDTextures() {}
 };
 
+class MXMDInstances
+{
+public:
+	typedef std::unique_ptr<MXMDInstances> Ptr;
+	
+	virtual int GetNumInstances() const = 0;
+	virtual const MXMDTransformMatrix *GetTransform(int id) const = 0;
+	virtual int GetStartingGroup(int id) const = 0;
+	virtual int GetNumGroups(int id) const = 0;	
+
+	virtual void SwapEndian() {};
+	virtual ~MXMDInstances() {}
+};
+
 class MXMDExternalResource
 {
 public:
@@ -253,4 +267,5 @@ public:
 	MXMDMaterials::Ptr GetMaterials();
 	MXMDGeomBuffers::Ptr GetGeometry(int groupID = 0);
 	MXMDTextures::Ptr GetTextures();
+	MXMDInstances::Ptr GetInstances();
 };

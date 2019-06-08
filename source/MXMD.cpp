@@ -561,6 +561,20 @@ int MXMDTextures_V1_Wrap::_ExtractTexture(const _Ty *outputFolder, int id, Textu
 	return 0;
 }
 
+
+class MXMDInstances_V1_Wrap : public MXMDInstances
+{
+	MXMDInstancesHeader_V1 *data;
+public:
+	MXMDInstances_V1_Wrap(MXMDInstancesHeader_V1 *input) : data(input) {}
+
+	int GetNumInstances() const { return data->matricesCount; }
+	const MXMDTransformMatrix *GetTransform(int id) const { return &data->GetMatrices()[id].mtx; }
+	int GetStartingGroup(int id) const { return data->GetLookups()[data->GetMatrices()[id].lookupIndex].groupIDStart; }
+	int GetNumGroups(int id) const { return data->GetLookups()[data->GetMatrices()[id].lookupIndex].numGroups; }
+	void SwapEndian() { data->SwapEndian(); }
+};
+
 class MXMDMeshObject_V3_Wrap : public MXMDMeshObject
 {
 	MXMDMeshObject_V3 *data;
@@ -1024,6 +1038,11 @@ int MXMD::_Load(const _Ty0 *fileName)
 		if (textures)
 			textures->SwapEndian();
 
+		MXMDInstances::Ptr instances = GetInstances();
+
+		if (instances)
+			instances->SwapEndian();
+
 		GetMaterials()->SwapEndian();
 
 		if (data.header->externalBufferIDsOffset)
@@ -1239,6 +1258,23 @@ MXMDTextures::Ptr MXMD::GetTextures()
 				res,
 				reinterpret_cast<CASMTGroup *>(data.masterBuffer + data.header->cachedTexturesOffset)));
 		}
+	}
+
+	default:
+		return nullptr;
+	}
+}
+
+MXMDInstances::Ptr MXMD::GetInstances()
+{
+	switch (data.header->version)
+	{
+	case MXMDVer1:
+	{
+		if (!data.header->instancesOffset)
+			return nullptr;
+
+		return MXMDInstances::Ptr(new MXMDInstances_V1_Wrap(reinterpret_cast<MXMDInstancesHeader_V1 *>(data.header->GetMe() + data.header->instancesOffset)));
 	}
 
 	default:

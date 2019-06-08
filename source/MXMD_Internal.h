@@ -53,7 +53,8 @@ struct MXMDHeader
 		//custom values
 		externalBufferIDsOffset,
 		externalBufferIDsCount,
-		null00[5];
+		instancesOffset,
+		null00[4];
 
 	ES_FORCEINLINE void SwapEndian() { _ArraySwap<int>(*this); }
 	ES_FORCEINLINE char *GetMe() { return reinterpret_cast<char *>(this); }
