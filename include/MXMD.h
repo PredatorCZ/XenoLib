@@ -233,6 +233,7 @@ public:
 	virtual const MXMDTransformMatrix *GetTransform(int id) const = 0;
 	virtual int GetStartingGroup(int id) const = 0;
 	virtual int GetNumGroups(int id) const = 0;	
+	virtual int GetMeshGroup(int id) const = 0;
 
 	virtual void SwapEndian() {};
 	virtual ~MXMDInstances() {}

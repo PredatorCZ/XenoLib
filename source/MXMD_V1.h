@@ -364,12 +364,20 @@ struct MXMDMaterialsHeader_V1
 	}
 };
 
+struct MXMDInstanceItem_V1
+{
+	float unk[8];
+	int meshGroup;
+
+	ES_FORCEINLINE void SwapEndian() { _ArraySwap<int>(*this); }
+};
+
 struct MXMDInstanceLookup_V1
 {
 	int groupIDStart,
 		numGroups;
 
-	ES_FORCEINLINE void SwapEndian() { _ArraySwap<short>(*this); }
+	ES_FORCEINLINE void SwapEndian() { _ArraySwap<int>(*this); }
 };
 
 struct MXMDInstanceMatrix_V1
@@ -382,7 +390,7 @@ struct MXMDInstanceMatrix_V1
 		unk,
 		null01;
 
-	ES_FORCEINLINE void SwapEndian() { _ArraySwap<short>(*this); }
+	ES_FORCEINLINE void SwapEndian() { _ArraySwap<int>(*this); }
 };
 
 struct MXMDInstancesHeader_V1
@@ -400,6 +408,7 @@ struct MXMDInstancesHeader_V1
 	ES_FORCEINLINE char *GetMe() { return reinterpret_cast<char *>(this); }
 	ES_FORCEINLINE MXMDInstanceMatrix_V1 *GetMatrices() { return reinterpret_cast<MXMDInstanceMatrix_V1 *>(GetMe() + matricesOffset); }
 	ES_FORCEINLINE MXMDInstanceLookup_V1 *GetLookups() { return reinterpret_cast<MXMDInstanceLookup_V1 *>(GetMe() + lookupsOffset); }
+	ES_FORCEINLINE MXMDInstanceItem_V1 *GetInstanceItems() { return reinterpret_cast<MXMDInstanceItem_V1 *>(GetMe() + groupsOffset); }
 	ES_FORCEINLINE void SwapEndian()
 	{
 		_ArraySwap<int>(*this);
@@ -413,6 +422,11 @@ struct MXMDInstancesHeader_V1
 
 		for (int m = 0; m < lookupsCount; m++)
 			lookups[m].SwapEndian();
+
+		MXMDInstanceItem_V1 *items = GetInstanceItems();
+
+		for (int m = 0; m < groupsCount; m++)
+			items[m].SwapEndian();
 	}
 };
 
