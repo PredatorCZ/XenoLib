@@ -1086,9 +1086,10 @@ int MXMD::_Load(const _Ty0 *fileName)
 				{
 					MXMDTerrainBufferLookupHeader_V1 *lookups = reinterpret_cast<MXMDTerrainBufferLookupHeader_V1 *>(data.masterBuffer + data.header->externalBufferIDsOffset);
 					MXMDTerrainBufferLookup_V1 *bufferLookups = lookups->GetBufferLookups();
+					int curBuff = 0;
 
 					for (int i = 0; i < lookups->bufferLookupCount; i++)
-						for (int s = 0; s < 2; s++)
+						for (int s = 0; s < 2; s++, curBuff++)
 						{
 							const int &cIndex = bufferLookups[i].bufferIndex[s];
 							bool found = false;
@@ -1105,12 +1106,7 @@ int MXMD::_Load(const _Ty0 *fileName)
 
 							flippedOffsets.push_back(cIndex);
 
-							MXMDGeomBuffers::Ptr geom = GetGeometry(i);
-
-							if (!geom)
-								continue;
-
-							geom->SwapEndian();
+							MXMDGeometryHeader_V1_Wrap(reinterpret_cast<MXMDGeometryHeader_V1 *>(externalResourcev1->buffer + bufferLookups[i].bufferIndex[s])).SwapEndian();
 						}
 				}
 				else
@@ -1251,8 +1247,15 @@ MXMDGeomBuffers::Ptr MXMD::GetGeometry(int groupID)
 					MXMDTerrainBufferLookupHeader_V1 *lookups = reinterpret_cast<MXMDTerrainBufferLookupHeader_V1 *>(data.masterBuffer + data.header->externalBufferIDsOffset);
 					MXMDTerrainBufferLookup_V1 *bufferLookups = lookups->GetBufferLookups();
 					ushort *indices = lookups->GetGroupIndices();
-					const int outerIndex = indices[groupID] / 2;
-					const int innerIndex = indices[groupID] % 2;
+
+					int outerIndex = indices[groupID];
+					int innerIndex = 0;
+					
+					if (outerIndex >= lookups->bufferLookupCount)
+					{
+						outerIndex -= lookups->bufferLookupCount;
+						innerIndex = 1;
+					}
 
 					return MXMDGeomBuffers::Ptr(new MXMDGeometryHeader_V1_Wrap(reinterpret_cast<MXMDGeometryHeader_V1 *>(res->buffer + bufferLookups[outerIndex].bufferIndex[innerIndex])));
 				}
