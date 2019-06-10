@@ -1047,10 +1047,15 @@ int MXMD::_Load(const _Ty0 *fileName)
 
 		if (data.header->externalBufferIDsOffset)
 		{
-			int *indices = reinterpret_cast<int *>(data.masterBuffer + data.header->externalBufferIDsOffset);
+			if (data.header->externalBufferIDsCount < 0)
+				reinterpret_cast<MXMDTerrainBufferLookupHeader_V1 *>(data.masterBuffer + data.header->externalBufferIDsOffset)->SwapEndian();
+			else
+			{
+				int *indices = reinterpret_cast<int *>(data.masterBuffer + data.header->externalBufferIDsOffset);
 
-			for (int i = 0; i < data.header->externalBufferIDsCount; i++)
-				FByteswapper(indices[i]);
+				for (int i = 0; i < data.header->externalBufferIDsCount; i++)
+					FByteswapper(indices[i]);
+			}
 		}
 	}
 
@@ -1075,31 +1080,66 @@ int MXMD::_Load(const _Ty0 *fileName)
 			if (rd.SwappedEndian())
 			{
 				std::vector<int> flippedOffsets;
-				int *indices = reinterpret_cast<int *>(data.masterBuffer + data.header->externalBufferIDsOffset);
 
-				for (int i = 0; i < data.header->externalBufferIDsCount; i++)
+				if (data.header->externalBufferIDsCount < 0)
 				{
-					const int &cIndex = indices[i];
-					bool found = false;
+					MXMDTerrainBufferLookupHeader_V1 *lookups = reinterpret_cast<MXMDTerrainBufferLookupHeader_V1 *>(data.masterBuffer + data.header->externalBufferIDsOffset);
+					MXMDTerrainBufferLookup_V1 *bufferLookups = lookups->GetBufferLookups();
 
-					for (auto &o : flippedOffsets)
-						if (o == cIndex)
+					for (int i = 0; i < lookups->bufferLookupCount; i++)
+						for (int s = 0; s < 2; s++)
 						{
-							found = true;
-							break;
+							const int &cIndex = bufferLookups[i].bufferIndex[s];
+							bool found = false;
+
+							for (auto &o : flippedOffsets)
+								if (o == cIndex)
+								{
+									found = true;
+									break;
+								}
+
+							if (found)
+								continue;
+
+							flippedOffsets.push_back(cIndex);
+
+							MXMDGeomBuffers::Ptr geom = GetGeometry(i);
+
+							if (!geom)
+								continue;
+
+							geom->SwapEndian();
 						}
+				}
+				else
+				{
+					int *indices = reinterpret_cast<int *>(data.masterBuffer + data.header->externalBufferIDsOffset);
 
-					if (found)
-						continue;
+					for (int i = 0; i < data.header->externalBufferIDsCount; i++)
+					{
+						const int &cIndex = indices[i];
+						bool found = false;
 
-					flippedOffsets.push_back(cIndex);
+						for (auto &o : flippedOffsets)
+							if (o == cIndex)
+							{
+								found = true;
+								break;
+							}
 
-					MXMDGeomBuffers::Ptr geom = GetGeometry(i);
+						if (found)
+							continue;
 
-					if (!geom)
-						continue;
+						flippedOffsets.push_back(cIndex);
 
-					geom->SwapEndian();
+						MXMDGeomBuffers::Ptr geom = GetGeometry(i);
+
+						if (!geom)
+							continue;
+
+						geom->SwapEndian();
+					}
 				}
 			}
 		}
@@ -1203,10 +1243,24 @@ MXMDGeomBuffers::Ptr MXMD::GetGeometry(int groupID)
 		else if (data.header->externalBufferIDsOffset)
 		{
 			MXMDExternalResource_V1 *res = static_cast<MXMDExternalResource_V1 *>(externalResource);
-			int *indices = reinterpret_cast<int *>(data.masterBuffer + data.header->externalBufferIDsOffset);
-
 			if (res)
-				return MXMDGeomBuffers::Ptr(new MXMDGeometryHeader_V1_Wrap(reinterpret_cast<MXMDGeometryHeader_V1 *>(res->buffer + indices[groupID])));
+			{
+				if (data.header->externalBufferIDsCount < 0)
+				{
+					MXMDTerrainBufferLookupHeader_V1 *lookups = reinterpret_cast<MXMDTerrainBufferLookupHeader_V1 *>(data.masterBuffer + data.header->externalBufferIDsOffset);
+					MXMDTerrainBufferLookup_V1 *bufferLookups = lookups->GetBufferLookups();
+					ushort *indices = lookups->GetGroupIndices();
+					const int outerIndex = indices[groupID] / 2;
+					const int innerIndex = indices[groupID] % 2;
+
+					return MXMDGeomBuffers::Ptr(new MXMDGeometryHeader_V1_Wrap(reinterpret_cast<MXMDGeometryHeader_V1 *>(res->buffer + bufferLookups[outerIndex].bufferIndex[innerIndex])));
+				}
+				else
+				{
+					int *indices = reinterpret_cast<int *>(data.masterBuffer + data.header->externalBufferIDsOffset);
+					return MXMDGeomBuffers::Ptr(new MXMDGeometryHeader_V1_Wrap(reinterpret_cast<MXMDGeometryHeader_V1 *>(res->buffer + indices[groupID])));
+				}
+			}
 			else
 				return nullptr;
 		}
