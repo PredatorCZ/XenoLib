@@ -572,6 +572,7 @@ public:
 	const MXMDTransformMatrix *GetTransform(int id) const { return &data->GetMatrices()[id].mtx; }
 	int GetStartingGroup(int id) const { return data->GetLookups()[data->GetMatrices()[id].lookupIndex].groupIDStart; }
 	int GetNumGroups(int id) const { return data->GetLookups()[data->GetMatrices()[id].lookupIndex].numGroups; }
+	int GetMeshGroup(int id) const { return data->GetInstanceItems()[id].meshGroup; }
 	void SwapEndian() { data->SwapEndian(); }
 };
 
@@ -1033,7 +1034,7 @@ int MXMD::_Load(const _Ty0 *fileName)
 		if (geom)
 			geom->SwapEndian();
 
-		MXMDTextures::Ptr textures;
+		MXMDTextures::Ptr textures = GetTextures();
 
 		if (textures)
 			textures->SwapEndian();
@@ -1072,7 +1073,7 @@ int MXMD::_Load(const _Ty0 *fileName)
 			res.ReadBuffer(externalResourcev1->buffer, _fileSize);
 			externalResource = externalResourcev1;
 
-			if (rd.SwappedEndian())
+			if (data.header->externalBufferIDsOffset)
 			{
 				std::vector<int> flippedOffsets;
 				int *indices = reinterpret_cast<int *>(data.masterBuffer + data.header->externalBufferIDsOffset);
