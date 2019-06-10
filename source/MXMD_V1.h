@@ -429,3 +429,57 @@ struct MXMDInstancesHeader_V1
 			items[m].SwapEndian();
 	}
 };
+
+struct MXMDTerrainBufferLookup_V1
+{
+	float unk00[6];
+	int bufferIndex[2];
+	int null;
+
+	ES_FORCEINLINE void SwapEndian() { _ArraySwap<int>(*this); }
+};
+
+struct MXMDTerrainBufferLookupHeader_V1
+{
+	int bufferLookupsOffset,
+		bufferLookupCount,
+		groupIndicesOffset,
+		groupIndicesCount,
+		unk00,
+		null00[6];
+
+	ES_FORCEINLINE char *GetMe() { return reinterpret_cast<char *>(this); }
+	ES_FORCEINLINE ushort *GetGroupIndices() { return reinterpret_cast<ushort *>(GetMe() + groupIndicesOffset); }
+	ES_FORCEINLINE MXMDTerrainBufferLookup_V1 *GetBufferLookups() { return reinterpret_cast<MXMDTerrainBufferLookup_V1 *>(GetMe() + bufferLookupsOffset); }
+
+	ES_FORCEINLINE void SwapEndian()
+	{
+		_ArraySwap<int>(*this);
+
+		ushort *ids = GetGroupIndices();
+
+		for (int m = 0; m < groupIndicesCount; m++)
+			FByteswapper(ids[m]);
+
+		MXMDTerrainBufferLookup_V1 *lookups = GetBufferLookups();
+
+		for (int m = 0; m < bufferLookupCount; m++)
+			lookups[m].SwapEndian();
+	}
+
+	ES_FORCEINLINE void RSwapEndian()
+	{
+		ushort *ids = GetGroupIndices();
+
+		for (int m = 0; m < groupIndicesCount; m++)
+			FByteswapper(ids[m]);
+
+		MXMDTerrainBufferLookup_V1 *lookups = GetBufferLookups();
+
+		for (int m = 0; m < bufferLookupCount; m++)
+			lookups[m].SwapEndian();
+		
+		_ArraySwap<int>(*this);
+	}
+
+};
