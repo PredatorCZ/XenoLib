@@ -1048,7 +1048,7 @@ int MXMD::_Load(const _Ty0 *fileName)
 		if (data.header->externalBufferIDsOffset)
 		{
 			if (data.header->externalBufferIDsCount < 0)
-				reinterpret_cast<MXMDTerrainBufferLookupHeader_V1 *>(data.masterBuffer + data.header->externalBufferIDsOffset)->SwapEndian();
+				reinterpret_cast<MXMDTerrainBufferLookupHeader_V1 *>(dataBuffer + hdr->externalBufferIDsOffset)->SwapEndian();
 			else
 			{
 				int *indices = reinterpret_cast<int *>(data.masterBuffer + data.header->externalBufferIDsOffset);
@@ -1083,7 +1083,7 @@ int MXMD::_Load(const _Ty0 *fileName)
 
 				if (data.header->externalBufferIDsCount < 0)
 				{
-					MXMDTerrainBufferLookupHeader_V1 *lookups = reinterpret_cast<MXMDTerrainBufferLookupHeader_V1 *>(data.masterBuffer + data.header->externalBufferIDsOffset);
+					MXMDTerrainBufferLookupHeader_V1 *lookups = reinterpret_cast<MXMDTerrainBufferLookupHeader_V1 *>(dataBuffer + hdr->externalBufferIDsOffset);
 					MXMDTerrainBufferLookup_V1 *bufferLookups = lookups->GetBufferLookups();
 
 					for (int i = 0; i < lookups->bufferLookupCount; i++)
