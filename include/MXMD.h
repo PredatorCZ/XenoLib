@@ -239,6 +239,31 @@ public:
 	virtual ~MXMDInstances() {}
 };
 
+class MXMDShaders
+{
+public:
+	typedef std::unique_ptr<MXMDShaders> Ptr;
+
+	virtual int GetNumShaders() const = 0;
+	virtual void *GetShaderFile(int id) const = 0;
+
+	virtual void SwapEndian() {};
+	virtual ~MXMDShaders() {}
+};
+
+class MXMDExternalTextures
+{
+public:
+	typedef std::unique_ptr<MXMDExternalTextures> Ptr;
+
+	virtual int GetNumTextures() const = 0;
+	virtual int GetExTextureID(int id) const = 0;
+	virtual int GetContainerID(int id) const = 0;
+
+	virtual void SwapEndian() {};
+	virtual ~MXMDExternalTextures() {}
+};
+
 class MXMDExternalResource
 {
 public:
@@ -259,7 +284,7 @@ class MXMD
 	//typedef wchar_t _Ty0;
 	int _Load(const _Ty0 *fileName);
 public:
-	MXMD() : data() {}
+	MXMD() : data(), externalResource(nullptr) {}
 	~MXMD();
 
 	ES_FORCEINLINE int Load(const char *fileName) { return _Load(fileName); }
@@ -269,4 +294,6 @@ public:
 	MXMDGeomBuffers::Ptr GetGeometry(int groupID = 0);
 	MXMDTextures::Ptr GetTextures();
 	MXMDInstances::Ptr GetInstances();
+	MXMDShaders::Ptr GetShaders();
+	MXMDExternalTextures::Ptr GetExternalTextures();
 };

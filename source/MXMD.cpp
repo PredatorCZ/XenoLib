@@ -576,6 +576,45 @@ public:
 	void SwapEndian() { data->SwapEndian(); }
 };
 
+class MXMDShaders_V1_Wrap : public MXMDShaders
+{
+	MXMDShadersHeader_V1 *data;
+public:
+	MXMDShaders_V1_Wrap(MXMDShadersHeader_V1 *input) : data(input) {}
+
+	int GetNumShaders() const { return data->numShaders; }
+	void *GetShaderFile(int id) const { return data->GetMe() + data->GetShaderItems()[id].offset; }
+
+	void SwapEndian() { data->SwapEndian(); }
+};
+
+class MXMDExternalTextures_V1_Wrap : public MXMDExternalTextures
+{
+	MXMDExternalTexture_V1 *data;
+	int numItems;
+public:
+	MXMDExternalTextures_V1_Wrap(MXMDExternalTexture_V1 *input, int numTexs) : data(input), numItems(numTexs) {}
+
+	int GetNumTextures() const { return numItems; }
+	int GetExTextureID(int id) const 
+	{
+		if (data[id].externalTextureID < 0)
+			return data[id].textureID;
+		else
+			return data[id].externalTextureID;
+	}
+
+	int GetContainerID(int id) const
+	{
+		if (data[id].externalTextureID < 0)
+			return data[id].containerID;
+		else
+			return -1;
+	}
+
+	void SwapEndian() { data->SwapEndian(); }
+};
+
 class MXMDMeshObject_V3_Wrap : public MXMDMeshObject
 {
 	MXMDMeshObject_V3 *data;
@@ -1044,12 +1083,17 @@ int MXMD::_Load(const _Ty0 *fileName)
 		if (instances)
 			instances->SwapEndian();
 
+		MXMDShaders::Ptr shaders = GetShaders();
+
+		if (shaders)
+			shaders->SwapEndian();
+
 		GetMaterials()->SwapEndian();
 
 		if (data.header->externalBufferIDsOffset)
 		{
 			if (data.header->externalBufferIDsCount < 0)
-				reinterpret_cast<MXMDTerrainBufferLookupHeader_V1 *>(dataBuffer + hdr->externalBufferIDsOffset)->SwapEndian();
+				reinterpret_cast<MXMDTerrainBufferLookupHeader_V1 *>(data.masterBuffer + data.header->externalBufferIDsOffset)->SwapEndian();
 			else
 			{
 				int *indices = reinterpret_cast<int *>(data.masterBuffer + data.header->externalBufferIDsOffset);
@@ -1084,7 +1128,7 @@ int MXMD::_Load(const _Ty0 *fileName)
 
 				if (data.header->externalBufferIDsCount < 0)
 				{
-					MXMDTerrainBufferLookupHeader_V1 *lookups = reinterpret_cast<MXMDTerrainBufferLookupHeader_V1 *>(dataBuffer + hdr->externalBufferIDsOffset);
+					MXMDTerrainBufferLookupHeader_V1 *lookups = reinterpret_cast<MXMDTerrainBufferLookupHeader_V1 *>(data.masterBuffer + data.header->externalBufferIDsOffset);
 					MXMDTerrainBufferLookup_V1 *bufferLookups = lookups->GetBufferLookups();
 					int curBuff = 0;
 
@@ -1236,7 +1280,13 @@ MXMDGeomBuffers::Ptr MXMD::GetGeometry(int groupID)
 	case MXMDVer1:
 	{
 		if (data.header->vertexBufferOffset)
-			return MXMDGeomBuffers::Ptr(new MXMDGeometryHeader_V1_Wrap(reinterpret_cast<MXMDGeometryHeader_V1 *>(data.masterBuffer + data.header->vertexBufferOffset)));
+			return MXMDGeomBuffers::Ptr
+			(
+				new MXMDGeometryHeader_V1_Wrap
+				(
+					reinterpret_cast<MXMDGeometryHeader_V1 *>(data.masterBuffer + data.header->vertexBufferOffset)
+				)
+			);
 		else if (data.header->externalBufferIDsOffset)
 		{
 			MXMDExternalResource_V1 *res = static_cast<MXMDExternalResource_V1 *>(externalResource);
@@ -1257,12 +1307,24 @@ MXMDGeomBuffers::Ptr MXMD::GetGeometry(int groupID)
 						innerIndex = 1;
 					}
 
-					return MXMDGeomBuffers::Ptr(new MXMDGeometryHeader_V1_Wrap(reinterpret_cast<MXMDGeometryHeader_V1 *>(res->buffer + bufferLookups[outerIndex].bufferIndex[innerIndex])));
+					return MXMDGeomBuffers::Ptr
+					(
+						new MXMDGeometryHeader_V1_Wrap
+						(
+							reinterpret_cast<MXMDGeometryHeader_V1 *>(res->buffer + bufferLookups[outerIndex].bufferIndex[innerIndex])
+						)
+					);
 				}
 				else
 				{
 					int *indices = reinterpret_cast<int *>(data.masterBuffer + data.header->externalBufferIDsOffset);
-					return MXMDGeomBuffers::Ptr(new MXMDGeometryHeader_V1_Wrap(reinterpret_cast<MXMDGeometryHeader_V1 *>(res->buffer + indices[groupID])));
+					return MXMDGeomBuffers::Ptr
+					(
+						new MXMDGeometryHeader_V1_Wrap
+						(
+							reinterpret_cast<MXMDGeometryHeader_V1 *>(res->buffer + indices[groupID])
+						)
+					);
 				}
 			}
 			else
@@ -1275,7 +1337,13 @@ MXMDGeomBuffers::Ptr MXMD::GetGeometry(int groupID)
 	case MXMDVer3:
 	{
 		if (data.header->vertexBufferOffset)
-			return MXMDGeomBuffers::Ptr(new MXMDGeometryHeader_V3_Wrap(reinterpret_cast<MXMDGeometryHeader_V3 *>(data.masterBuffer + data.header->vertexBufferOffset)));
+			return MXMDGeomBuffers::Ptr
+			(
+				new MXMDGeometryHeader_V3_Wrap
+				(
+					reinterpret_cast<MXMDGeometryHeader_V3 *>(data.masterBuffer + data.header->vertexBufferOffset)
+				)
+			);
 		else
 		{
 			MXMDExternalResource_V3 *res = static_cast<MXMDExternalResource_V3 *>(externalResource);
@@ -1332,8 +1400,57 @@ MXMDInstances::Ptr MXMD::GetInstances()
 		if (!data.header->instancesOffset)
 			return nullptr;
 
-		return MXMDInstances::Ptr(new MXMDInstances_V1_Wrap(reinterpret_cast<MXMDInstancesHeader_V1 *>(data.header->GetMe() + data.header->instancesOffset)));
+		return MXMDInstances::Ptr
+		(
+			new MXMDInstances_V1_Wrap
+			(
+				reinterpret_cast<MXMDInstancesHeader_V1 *>(data.header->GetMe() + data.header->instancesOffset)
+			)
+		);
 	}
+
+	default:
+		return nullptr;
+	}
+}
+
+MXMDShaders::Ptr MXMD::GetShaders()
+{
+	if (!data.header->shadersOffset)
+		return nullptr;
+
+	switch (data.header->version)
+	{
+	case MXMDVer1:
+		return MXMDShaders::Ptr
+		(
+			new MXMDShaders_V1_Wrap
+			(
+				reinterpret_cast<MXMDShadersHeader_V1 *>(data.header->GetMe() + data.header->shadersOffset)
+			)
+		);
+
+	default:
+		return nullptr;
+	}
+}
+
+MXMDExternalTextures::Ptr MXMD::GetExternalTextures()
+{
+	if (!data.header->externalTexturesOffset)
+		return nullptr;
+
+	switch (data.header->version)
+	{
+	case MXMDVer1:
+		return MXMDExternalTextures::Ptr
+		(
+			new MXMDExternalTextures_V1_Wrap
+			(
+				reinterpret_cast<MXMDExternalTexture_V1 *>(data.header->GetMe() + data.header->externalTexturesOffset), 
+				data.header->externalTexturesCount
+			)
+		);
 
 	default:
 		return nullptr;

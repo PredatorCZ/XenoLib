@@ -483,3 +483,43 @@ struct MXMDTerrainBufferLookupHeader_V1
 	}
 
 };
+
+struct MXMDShaderItem_V1
+{
+	int offset,
+		size,
+		null[2];
+
+	ES_FORCEINLINE void SwapEndian() { _ArraySwap<int>(*this); }
+};
+
+struct MXMDShadersHeader_V1
+{
+	int arrayOffset,
+		numShaders,
+		unk,
+		null[5];
+
+	ES_FORCEINLINE char *GetMe() { return reinterpret_cast<char *>(this); }
+	ES_FORCEINLINE MXMDShaderItem_V1 *GetShaderItems() { return reinterpret_cast<MXMDShaderItem_V1 *>(GetMe() + arrayOffset); }
+
+	ES_FORCEINLINE void SwapEndian() 
+	{ 
+		_ArraySwap<int>(*this); 
+
+		MXMDShaderItem_V1 *items = GetShaderItems();
+
+		for (int m = 0; m < numShaders; m++)
+			items[m].SwapEndian();
+	}
+};
+
+struct MXMDExternalTexture_V1
+{
+	short textureID,
+		containerID,
+		externalTextureID,
+		unk;
+
+	ES_FORCEINLINE void SwapEndian() { _ArraySwap<short>(*this); }
+};

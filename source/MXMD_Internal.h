@@ -54,7 +54,9 @@ struct MXMDHeader
 		externalBufferIDsOffset,
 		externalBufferIDsCount,
 		instancesOffset,
-		null00[4];
+		externalTexturesOffset,
+		externalTexturesCount,
+		null00[2];
 
 	ES_FORCEINLINE void SwapEndian() { _ArraySwap<int>(*this); }
 	ES_FORCEINLINE char *GetMe() { return reinterpret_cast<char *>(this); }

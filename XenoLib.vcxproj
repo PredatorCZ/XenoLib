@@ -137,6 +137,7 @@
     <ClCompile Include="source\BC.cpp" />
     <ClCompile Include="source\DRSM.cpp" />
     <ClCompile Include="source\LBIM.cpp" />
+    <ClCompile Include="source\MTHS.cpp" />
     <ClCompile Include="source\MTXT.cpp" />
     <ClCompile Include="source\MXMD.cpp" />
     <ClCompile Include="source\PNGWrap.cpp" />
@@ -145,6 +146,7 @@
   <ItemGroup>
     <ClInclude Include="include\BC.h" />
     <ClInclude Include="include\DRSM.h" />
+    <ClInclude Include="include\MTHS.h" />
     <ClInclude Include="include\MXMD.h" />
     <ClInclude Include="include\SAR.h" />
     <ClInclude Include="include\XenoLibAPI.h" />
