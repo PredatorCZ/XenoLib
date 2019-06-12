@@ -612,7 +612,11 @@ public:
 			return -1;
 	}
 
-	void SwapEndian() { data->SwapEndian(); }
+	void SwapEndian() 
+	{
+		for (int t = 0; t < numItems; t++)
+			data[t].SwapEndian(); 
+	}
 };
 
 class MXMDMeshObject_V3_Wrap : public MXMDMeshObject
@@ -1087,6 +1091,11 @@ int MXMD::_Load(const _Ty0 *fileName)
 
 		if (shaders)
 			shaders->SwapEndian();
+
+		MXMDExternalTextures::Ptr extexts = GetExternalTextures();
+
+		if (extexts)
+			extexts->SwapEndian();
 
 		GetMaterials()->SwapEndian();
 
