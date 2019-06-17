@@ -14,7 +14,8 @@ template<class C> union _MTHSPointer<C, false>
 {
 	int varPtr;
 	C *ptr;
-	ES_FORCEINLINE void Fixup(char *masterBuffer) { ptr = masterBuffer + varPtr; };
+	char *cPtr;
+	ES_FORCEINLINE void Fixup(char *masterBuffer) { cPtr = masterBuffer + varPtr; };
 	ES_FORCEINLINE C *Get(char *) { return ptr; }
 };
 
