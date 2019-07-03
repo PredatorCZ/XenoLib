@@ -15,6 +15,9 @@
 	along with this program.If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include <cmath>
+#include <cstring>
+#include <climits>
 #include <map>
 #include "MXMD_V3.h"
 #include "DRSM.h"

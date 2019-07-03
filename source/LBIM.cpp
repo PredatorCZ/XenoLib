@@ -292,7 +292,7 @@ int _ConvertLBIM(const char *buffer, int size, const _Ty *_path, TextureConversi
 	else
 		path.append(esString(".png"));
 
-	std::ofstream ofs(path, std::ios::binary | std::ios::out);
+	std::ofstream ofs(esString(path), std::ios::binary | std::ios::out);
 
 	if (ofs.fail())
 	{

@@ -15,12 +15,13 @@
 	along with this program.If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include <cstring>
 #include <fstream>
 #include "formats/DDS.hpp"
 #include "formats/BlockDecoder.inl"
 #include "datas/endian.hpp"
 #include "datas/supercore.hpp"
-#include "datas/MasterPrinter.hpp"
+#include "datas/masterprinter.hpp"
 #include "datas/esstring.h"
 #include "XenoLibAPI.h"
 #include "png.h"
@@ -317,7 +318,7 @@ int _ConvertMTXT(const char *buffer, int size, const _Ty *_path, TextureConversi
 	else
 		path.append(esString(".png"));
 
-	std::ofstream ofs(path, std::ios::binary | std::ios::out);
+	std::ofstream ofs(esString(path), std::ios::binary | std::ios::out);
 
 	if (ofs.fail())
 	{
