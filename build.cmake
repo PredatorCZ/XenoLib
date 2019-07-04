@@ -1,52 +1,47 @@
 
-if (NOT DEFINED UNICODE)
-	set (UNICODE TRUE)
+if (NOT DEFINED XenoLib_MASTER_DIR)
+    set(XenoLib_MASTER_DIR .)
 endif()
 
 add_library(XenoLib STATIC 
-"3rd_party/libpng/png.c"
-"3rd_party/libpng/pngerror.c"
-"3rd_party/libpng/pngget.c"
-"3rd_party/libpng/pngmem.c"
-"3rd_party/libpng/pngpread.c"
-"3rd_party/libpng/pngread.c"
-"3rd_party/libpng/pngrio.c"
-"3rd_party/libpng/pngrtran.c"
-"3rd_party/libpng/pngrutil.c"
-"3rd_party/libpng/pngset.c"
-"3rd_party/libpng/pngtest.c"
-"3rd_party/libpng/pngtrans.c"
-"3rd_party/libpng/pngwio.c"
-"3rd_party/libpng/pngwrite.c"
-"3rd_party/libpng/pngwtran.c"
-"3rd_party/libpng/pngwutil.c"
-"3rd_party/precore/datas/MasterPrinter.cpp" 
-"3rd_party/zlib/adler32.c" 
-"3rd_party/zlib/crc32.c" 
-"3rd_party/zlib/deflate.c" 
-"3rd_party/zlib/inffast.c" 
-"3rd_party/zlib/inflate.c" 
-"3rd_party/zlib/inftrees.c" 
-"3rd_party/zlib/trees.c" 
-"3rd_party/zlib/uncompr.c" 
-"3rd_party/zlib/zutil.c" 
-"source/BC.cpp" 
-"source/DRSM.cpp" 
-"source/LBIM.cpp" 
-"source/MTHS.cpp" 
-"source/MTXT.cpp" 
-"source/MXMD.cpp" 
-"source/PNGWrap.cpp" 
-"source/SAR.cpp" 
+"${XenoLib_MASTER_DIR}/3rd_party/libpng/png.c"
+"${XenoLib_MASTER_DIR}/3rd_party/libpng/pngerror.c"
+"${XenoLib_MASTER_DIR}/3rd_party/libpng/pngget.c"
+"${XenoLib_MASTER_DIR}/3rd_party/libpng/pngmem.c"
+"${XenoLib_MASTER_DIR}/3rd_party/libpng/pngpread.c"
+"${XenoLib_MASTER_DIR}/3rd_party/libpng/pngread.c"
+"${XenoLib_MASTER_DIR}/3rd_party/libpng/pngrio.c"
+"${XenoLib_MASTER_DIR}/3rd_party/libpng/pngrtran.c"
+"${XenoLib_MASTER_DIR}/3rd_party/libpng/pngrutil.c"
+"${XenoLib_MASTER_DIR}/3rd_party/libpng/pngset.c"
+"${XenoLib_MASTER_DIR}/3rd_party/libpng/pngtest.c"
+"${XenoLib_MASTER_DIR}/3rd_party/libpng/pngtrans.c"
+"${XenoLib_MASTER_DIR}/3rd_party/libpng/pngwio.c"
+"${XenoLib_MASTER_DIR}/3rd_party/libpng/pngwrite.c"
+"${XenoLib_MASTER_DIR}/3rd_party/libpng/pngwtran.c"
+"${XenoLib_MASTER_DIR}/3rd_party/libpng/pngwutil.c"
+"${XenoLib_MASTER_DIR}/3rd_party/precore/datas/MasterPrinter.cpp" 
+"${XenoLib_MASTER_DIR}/3rd_party/zlib/adler32.c" 
+"${XenoLib_MASTER_DIR}/3rd_party/zlib/crc32.c" 
+"${XenoLib_MASTER_DIR}/3rd_party/zlib/deflate.c" 
+"${XenoLib_MASTER_DIR}/3rd_party/zlib/inffast.c" 
+"${XenoLib_MASTER_DIR}/3rd_party/zlib/inflate.c" 
+"${XenoLib_MASTER_DIR}/3rd_party/zlib/inftrees.c" 
+"${XenoLib_MASTER_DIR}/3rd_party/zlib/trees.c" 
+"${XenoLib_MASTER_DIR}/3rd_party/zlib/uncompr.c" 
+"${XenoLib_MASTER_DIR}/3rd_party/zlib/zutil.c" 
+"${XenoLib_MASTER_DIR}/source/BC.cpp" 
+"${XenoLib_MASTER_DIR}/source/DRSM.cpp" 
+"${XenoLib_MASTER_DIR}/source/LBIM.cpp" 
+"${XenoLib_MASTER_DIR}/source/MTHS.cpp" 
+"${XenoLib_MASTER_DIR}/source/MTXT.cpp" 
+"${XenoLib_MASTER_DIR}/source/MXMD.cpp" 
+"${XenoLib_MASTER_DIR}/source/PNGWrap.cpp" 
+"${XenoLib_MASTER_DIR}/source/SAR.cpp" 
 )
 
-include_directories("./include/")
-include_directories("./source/")
-include_directories("./3rd_party/precore/")
-include_directories("./3rd_party/libpng/")
-include_directories("./3rd_party/zlib/")
-
-if (WIN32 AND UNICODE)
-	message(STATUS "Compiling with wchar_t")
-	add_definitions(-D_UNICODE -DUNICODE)
-endif()
+include_directories("${XenoLib_MASTER_DIR}/include/")
+include_directories("${XenoLib_MASTER_DIR}/source/")
+include_directories("${XenoLib_MASTER_DIR}/3rd_party/precore/")
+include_directories("${XenoLib_MASTER_DIR}/3rd_party/libpng/")
+include_directories("${XenoLib_MASTER_DIR}/3rd_party/zlib/")
