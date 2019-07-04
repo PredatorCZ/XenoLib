@@ -46,27 +46,27 @@ unsigned int computePixelIndexWithinMicroTile(unsigned int x, unsigned int y, un
 	switch (bpp)
 	{
 	case 0x8:
-		return (32 * ((y & 4) >> 2) | 16 * (y & 1) | 8 * ((y & 2) >> 1) |
-			4 * ((x & 4) >> 2) | 2 * ((x & 2) >> 1) | x & 1);
+		return 32 * ((y & 4) >> 2) | 16 * (y & 1) | 8 * ((y & 2) >> 1) |
+			4 * ((x & 4) >> 2) | 2 * ((x & 2) >> 1) | (x & 1);
 	case 0x10:
-		return (32 * ((y & 4) >> 2) | 16 * ((y & 2) >> 1) | 8 * (y & 1) |
-			4 * ((x & 4) >> 2) | 2 * ((x & 2) >> 1) | x & 1);
+		return 32 * ((y & 4) >> 2) | 16 * ((y & 2) >> 1) | 8 * (y & 1) |
+			4 * ((x & 4) >> 2) | 2 * ((x & 2) >> 1) | (x & 1);
 	case 0x20:
 	case 0x60:
-		return (32 * ((y & 4) >> 2) | 16 * ((y & 2) >> 1) | 8 * ((x & 4) >> 2) |
-			4 * (y & 1) | 2 * ((x & 2) >> 1) | x & 1);
+		return 32 * ((y & 4) >> 2) | 16 * ((y & 2) >> 1) | 8 * ((x & 4) >> 2) |
+			4 * (y & 1) | 2 * ((x & 2) >> 1) | (x & 1);
 	case 0x40:
-		return (32 * ((y & 4) >> 2) | 16 * ((y & 2) >> 1) | 8 * ((x & 4) >> 2) |
-			4 * ((x & 2) >> 1) | 2 * (y & 1) | x & 1);
+		return 32 * ((y & 4) >> 2) | 16 * ((y & 2) >> 1) | 8 * ((x & 4) >> 2) |
+			4 * ((x & 2) >> 1) | 2 * (y & 1) | (x & 1);
 	case 0x80:
-		return (32 * ((y & 4) >> 2) | 16 * ((y & 2) >> 1) | 8 * ((x & 4) >> 2) |
-			4 * ((x & 2) >> 1) | 2 * (x & 1) | y & 1);
+		return 32 * ((y & 4) >> 2) | 16 * ((y & 2) >> 1) | 8 * ((x & 4) >> 2) |
+			4 * ((x & 2) >> 1) | 2 * (x & 1) | (y & 1);
 	default:
 		break;
 	}
 
-	return (32 * ((y & 4) >> 2) | 16 * ((y & 2) >> 1) | 8 * ((x & 4) >> 2) |
-		4 * (y & 1) | 2 * ((x & 2) >> 1) | x & 1);
+	return 32 * ((y & 4) >> 2) | 16 * ((y & 2) >> 1) | 8 * ((x & 4) >> 2) |
+		4 * (y & 1) | 2 * ((x & 2) >> 1) | (x & 1);
 }
 
 unsigned int isThickMacroTiled(GX2TileMode tileMode)
@@ -218,7 +218,7 @@ unsigned int computeSurfaceAddrFromCoordMacroTiled(unsigned int x, unsigned int 
 	elemOffset = (elemOffset + 7) / 8;
 
 	unsigned int pipe = ((y >> 3) ^ (x >> 3)) & 1;
-	unsigned int bank = ((y >> 5) ^ (x >> 3)) & 1 | 2 * (((y >> 4) ^ (x >> 4)) & 1);
+	unsigned int bank = (((y >> 5) ^ (x >> 3)) & 1) | (2 * (((y >> 4) ^ (x >> 4)) & 1));
 
 	const unsigned int bankPipe = ((pipe + 2 * bank) ^ (6 * precomp.sampleSlice ^ precomp.swizzle_)) % 8;
 
@@ -238,5 +238,5 @@ unsigned int computeSurfaceAddrFromCoordMacroTiled(unsigned int x, unsigned int 
 	}
 
 	const unsigned int totalOffset = elemOffset + ((macroTileOffset + sliceOffset) >> 3);
-	return bank << 9 | pipe << 8 | 255 & totalOffset | (totalOffset & -256) << 3;
+	return (bank << 9) | (pipe << 8) | (255 & totalOffset) | ((totalOffset & -256) << 3);
 }

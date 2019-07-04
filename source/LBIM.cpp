@@ -53,7 +53,7 @@ enum
 int NumLeadingZeroes(int Value)
 {
 	int numZeros = 0;
-	for (numZeros; (((Value >> numZeros) & 1) == 0); numZeros++) {}
+	for (; (((Value >> numZeros) & 1) == 0); numZeros++) {}
 	return numZeros;
 }
 
