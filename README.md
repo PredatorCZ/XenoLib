@@ -1,4 +1,7 @@
 # XenoLib
+
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/ca0b675a83e4448cb90ddb858607b9f5)](https://app.codacy.com/app/PredatorCZ/XenoLib?utm_source=github.com&utm_medium=referral&utm_content=PredatorCZ/XenoLib&utm_campaign=Badge_Grade_Dashboard)
+
 XenoLib is independent serialize library for various formats used by Xenoblade Engine.\
 Library is compilable under VS 2015, 2017, 2019.
 
