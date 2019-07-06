@@ -6,6 +6,16 @@ if (NOT DEFINED UNICODE)
 	set (UNICODE TRUE)
 endif()
 
+if (NOT DEFINED RELEASEVER)
+	set(RELEASEVER FALSE)
+endif()
+
+if (RELEASEVER)
+	set(CMAKE_BUILD_TYPE Release)
+else()
+	set(CMAKE_BUILD_TYPE Debug)
+endif()
+
 set(CMAKE_CXX_STANDARD 11)
 
 add_library(XenoLib STATIC 

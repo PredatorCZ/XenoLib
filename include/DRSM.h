@@ -98,7 +98,7 @@ class DRSM
 
 	template<class _Ty0>
 	//typedef wchar_t _Ty0;
-	int _Load(const _Ty0 *fileName);
+	int _Load(const _Ty0 *fileName, bool suppressErrors);
 
 	template<class _Ty0>
 	//typedef wchar_t _Ty0;
@@ -107,8 +107,8 @@ public:
 	DRSM() : data() {}
 	~DRSM();
 
-	ES_FORCEINLINE int Load(const char *fileName) { return _Load(fileName); }
-	ES_FORCEINLINE int Load(const wchar_t *fileName) { return _Load(fileName); }
+	ES_FORCEINLINE int Load(const char *fileName, bool suppressErrors = false) { return _Load(fileName, suppressErrors); }
+	ES_FORCEINLINE int Load(const wchar_t *fileName, bool suppressErrors = false) { return _Load(fileName, suppressErrors); }
 	ES_FORCEINLINE DRSMResources *GetData() { return data.header; }
 	ES_FORCEINLINE char *GetResource(int id) { return resources[id]; }
 	ES_FORCEINLINE int GetNumTextures() const { return data.header->TextureTable()->numTextureItems; }

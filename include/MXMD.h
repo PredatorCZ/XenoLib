@@ -282,13 +282,13 @@ class MXMD
 	MXMDExternalResource *externalResource;
 	template<class _Ty0>
 	//typedef wchar_t _Ty0;
-	int _Load(const _Ty0 *fileName);
+	int _Load(const _Ty0 *fileName, bool suppressErrors);
 public:
 	MXMD() : data(), externalResource(nullptr) {}
 	~MXMD();
 
-	ES_FORCEINLINE int Load(const char *fileName) { return _Load(fileName); }
-	ES_FORCEINLINE int Load(const wchar_t *fileName) { return _Load(fileName); }
+	ES_FORCEINLINE int Load(const char *fileName, bool suppressErrors = false) { return _Load(fileName, suppressErrors); }
+	ES_FORCEINLINE int Load(const wchar_t *fileName, bool suppressErrors = false) { return _Load(fileName, suppressErrors); }
 	MXMDModel::Ptr GetModel();
 	MXMDMaterials::Ptr GetMaterials();
 	MXMDGeomBuffers::Ptr GetGeometry(int groupID = 0);

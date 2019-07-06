@@ -45,16 +45,32 @@ struct xbc1Queue
 };
 
 template<class _Ty0>
-int DRSM::_Load(const _Ty0 *fileName)
+int DRSM::_Load(const _Ty0 *fileName, bool suppressErrors)
 {
 	BinReader rd(fileName);
+
+	if (!rd.IsValid())
+	{
+		if (!suppressErrors)
+		{	
+			printerror("[DRSM] Cannot open file.");
+		}
+
+		return 1;
+	}
+
+
 	DRSMHeader hdr;
 	rd.Read(hdr);
 
 	if (hdr.magic != ID)
 	{
-		printerror("[DRSM] Invalid header.");
-		return 1;
+		if (!suppressErrors)
+		{	
+			printerror("[DRSM] Invalid header.");
+		}
+
+		return 2;
 	}
 
 	data.masterBuffer = static_cast<char *>(malloc(hdr.dataSize));
@@ -79,8 +95,8 @@ int DRSM::_Load(const _Ty0 *fileName)
 	return 0;
 }
 
-template int DRSM::_Load(const char *fileName);
-template int DRSM::_Load(const wchar_t *fileName);
+template int DRSM::_Load(const char *fileName, bool suppressErrors);
+template int DRSM::_Load(const wchar_t *fileName, bool suppressErrors);
 
 const char *DRSM::GetTextureName(int id) const
 {

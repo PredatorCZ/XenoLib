@@ -1029,9 +1029,20 @@ struct xbc1QueueInternal
 };
 
 template<class _Ty0>
-int MXMD::_Load(const _Ty0 *fileName)
+int MXMD::_Load(const _Ty0 *fileName, bool suppressErrors)
 {
 	BinReader rd(fileName);
+
+	if (!rd.IsValid())
+	{
+		if (!suppressErrors)
+		{	
+			printerror("[MXMD] Cannot open file.");
+		}
+
+		return 1;
+	}
+
 	MXMDHeader hdr;
 	rd.Read(hdr);
 
@@ -1045,8 +1056,14 @@ int MXMD::_Load(const _Ty0 *fileName)
 		FByteswapper(hdr.version);
 		break;
 	default:
-		printerror("[MXMD] Invalid header.");
-		return 1;
+	{
+		if (!suppressErrors)
+		{	
+			printerror("[MXMD] Invalid header.");
+		}
+
+		return 2;
+	}
 	}
 
 	bool versionFound = false;
@@ -1060,8 +1077,12 @@ int MXMD::_Load(const _Ty0 *fileName)
 
 	if (!versionFound)
 	{
-		printerror("[MXMD] Unsupported version: ", << hdr.version);
-		return 2;
+		if (!suppressErrors)
+		{	
+			printerror("[MXMD] Unsupported version: ", << hdr.version);
+		}
+
+		return 3;
 	}
 
 	rd.Seek(0);
@@ -1253,8 +1274,8 @@ int MXMD::_Load(const _Ty0 *fileName)
 	return 0;
 }
 
-template int MXMD::_Load(const char *fileName);
-template int MXMD::_Load(const wchar_t *fileName);
+template int MXMD::_Load(const char *fileName, bool suppressErrors);
+template int MXMD::_Load(const wchar_t *fileName, bool suppressErrors);
 
 MXMDModel::Ptr MXMD::GetModel()
 { 
