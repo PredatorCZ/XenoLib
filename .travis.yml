@@ -1,5 +1,4 @@
 ﻿language: cpp
-compiler: gcc
 dist: trusty
 
 matrix:
@@ -11,8 +10,17 @@ matrix:
           sources:
             - ubuntu-toolchain-r-test
           packages:
+            - g++-6
+            - cmake
+      env:
+         - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
             - g++-7
-            - gcc-7
             - cmake
       env:
          - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
@@ -23,7 +31,6 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-8
-            - gcc-8
             - cmake
       env:
          - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
@@ -34,11 +41,10 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-9
-            - gcc-9
             - cmake
       env:
          - MATRIX_EVAL="CC=gcc-9 && CXX=g++-9"
-
+         
 before_install:
     - eval "${MATRIX_EVAL}"
 
