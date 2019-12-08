@@ -235,20 +235,16 @@ public:
 		if (data->assemblyCount > 0xFFF || !data->nodesOffset || !data->boneListOffset)
 			return;
 
-		MXMDSkinBones_V1 *sBones = data->GetSkinBones();
+		int *nameOffsets = data->GetBoneNamesOffsets();
 
-		if (!sBones)
+		if (!nameOffsets)
 			return;
 
-		short *ids = sBones->GetIDs(data->GetMe());
-		int *nameOffsets = sBones->GetBoneNameOffsets(data->GetMe());
+		remapBones.resize(data->boneNamesCount);
 
-		remapBones.resize(sBones->count);
-
-		for (int r = 0; r < sBones->count; r++)
+		for (int r = 0; r < data->boneNamesCount; r++)
 		{
-			short cid = ids[r];
-			const char *bneName = reinterpret_cast<const char *>(nameOffsets) + nameOffsets[cid];
+			const char *bneName = reinterpret_cast<const char *>(nameOffsets) + nameOffsets[r];
 
 			for (int b = 0; b < data->nodesCount; b++)
 			{

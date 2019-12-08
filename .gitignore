@@ -31,11 +31,8 @@
 *.out
 *.app
 
-ObjDump/*
 [bB]in/*
 .vs/*
-x64/*
 lib/*
-*.user
 *.vscode/*
 build/*
