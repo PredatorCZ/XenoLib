@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.3)
 project(XenoLib)
 
 if(NOT TARGETEX_LOCATION)
-	set(TARGETEX_LOCATION 3rd_party/PreCore/cmake)
+	set(TARGETEX_LOCATION 3rd_party/precore/cmake)
 	include(${TARGETEX_LOCATION}/targetex.cmake)
 	include(${TARGETEX_LOCATION}/chartype.cmake)
 endif()
@@ -50,7 +50,7 @@ build_target(
 	INCLUDES
 		source
 		include
-		3rd_party/PreCore
+		3rd_party/precore
 		3rd_party/libpng
 		3rd_party/zlib
 		3rd_party/pugixml/src
