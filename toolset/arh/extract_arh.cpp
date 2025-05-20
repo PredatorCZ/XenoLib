@@ -37,14 +37,10 @@ static AppInfo_s appInfo{
 
 AppInfo_s *AppInitModule() { return &appInfo; }
 
-void AppProcessFile(AppContext *ctx) {
+void ExtractV1(AppContext *ctx) {
   BinReaderRef rd(ctx->GetStream());
   ARH::Header hdr;
   rd.Read(hdr);
-
-  if (hdr.id != ARH::ID) {
-    throw es::InvalidHeaderError(hdr.id);
-  }
 
   auto dataStream = ctx->RequestFile(
       std::string(ctx->workingFile.GetFullPathNoExt()) + ".ard");
@@ -138,12 +134,84 @@ void AppProcessFile(AppContext *ctx) {
   }
 }
 
+struct Entry {
+  uint64 hash;
+  uint32 compressedSize;
+  uint32 uncompressedSize;
+};
+
+struct ARH2 {
+  static constexpr uint32 ID = CompileFourCC("arh2");
+  uint32 id;
+  uint32 numFiles;
+  uint64 unk;
+};
+
+void ExtractV2(AppContext *ctx) {
+  BinReaderRef rd(ctx->GetStream());
+  ARH2 hdr;
+  rd.Read(hdr);
+
+  auto dataStream = ctx->RequestFile(
+      std::string(ctx->workingFile.GetFullPathNoExt()) + ".ard");
+  BinReaderRef dataRd(*dataStream.Get());
+  std::string dataBuffer;
+
+  char hbuffer[0x100];
+
+  auto ectx = ctx->ExtractContext();
+
+  for (uint32 i = 0; i < hdr.numFiles; i++) {
+    Entry e;
+    rd.Read(e);
+
+    snprintf(hbuffer, sizeof(hbuffer), "%" PRIX64 ".bin", e.hash);
+
+    ectx->NewFile(hbuffer);
+    uint32 id;
+    const size_t dataStart = dataRd.Push();
+    dataRd.Read(id);
+    dataRd.Pop();
+
+    if (id == CompileFourCC("xbc1")) {
+      dataRd.ReadContainer(dataBuffer, e.compressedSize + 64);
+      try {
+        auto data = DecompressXBC1(dataBuffer.data());
+        ectx->SendData(data);
+      } catch (const std::exception &e) {
+        PrintWarning("Failed to decompress file: ", hbuffer);
+        ectx->SendData(dataBuffer);
+      }
+    } else {
+      dataRd.ReadContainer(dataBuffer, e.compressedSize);
+      ectx->SendData(dataBuffer);
+    }
+
+    dataRd.ApplyPadding();
+  }
+}
+
+void AppProcessFile(AppContext *ctx) {
+  uint32 id;
+  ctx->GetType(id);
+
+  if (id == ARH::ID) {
+    ExtractV1(ctx);
+  } else if (id == ARH2::ID) {
+    ExtractV2(ctx);
+  } else {
+    throw es::InvalidHeaderError(id);
+  }
+}
+
 size_t AppExtractStat(request_chunk requester) {
   auto data = requester(0, sizeof(ARH::Header));
   auto *hdr = reinterpret_cast<ARH::Header *>(data.data());
 
   if (hdr->id == ARH::ID) {
     return hdr->numFiles;
+  } else if (hdr->id == ARH2::ID) {
+    return reinterpret_cast<ARH2 *>(hdr)->numFiles;
   }
 
   return 0;

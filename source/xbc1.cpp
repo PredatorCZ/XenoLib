@@ -59,7 +59,7 @@ std::string DecompressXBC1(const char *data) {
         throw std::runtime_error("Zlib, not enough memory");
       } else if (status == Z_DATA_ERROR) [[likely]] {
         throw std::runtime_error("Zlib, data is corrupted");
-      } else if (status == Z_DATA_ERROR) {
+      } else if (status == Z_BUF_ERROR) {
         throw std::runtime_error("Zlib, output buffer is not big enough");
       } else [[unlikely]] {
         throw std::runtime_error("Zlib, decompression failed");
